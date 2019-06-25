@@ -6,13 +6,16 @@
 ### To Install ###
 # sudo dnf -y install jq
 
-### function to print multiple blank lines
+### function to print multiple blank lines: instead of /n/n/n/n/n -> lines 5 
 function lines { yes '' | sed ${1}q ; }
 
 # define RAM
 readonly MEM=/dev/shm
+# HOST address
 readonly HOST=localhost:9980
-readonly CURL="curl -s --compressed --limit-rate 1M --connect-timeout 5  --compressed --limit-rate 1M --connect-timeout 5"
+# burst/rate-limit
+readonly CURL="curl -s --compressed --limit-rate 1M --connect-timeout 5"
+# current rfc-3339 date
 readonly SIA_HOST_DATE=$( date --rfc-3339=ns )
 
 # cache date and atomic time in RFC-3339 format & print cached list
@@ -20,6 +23,8 @@ printf "\nCaching date... " && redis-cli -n 0 LPUSH SIA_HOST_DATE "$SIA_HOST_DAT
 
 # load initial host info into MEM
 $CURL -i -A "Sia-Agent" -u "":foobar $HOST/host | grep { > $MEM/SIA_HOST_INFO
+# load initial host storage info into MEM
+$CURL -i -A "Sia-Agent" -u "":foobar $HOST/host/storage | grep { > $MEM/SIA_HOST_STORAGE_INFO
 
 ####### External Settings - Start #######
 printf "\nCaching external maxdownloadbatchsize... " && redis-cli -n 0 LPUSH externalmaxdownloadbatchsize $( cat $MEM/SIA_HOST_INFO | jq .externalsettings | jq -r .maxdownloadbatchsize ) && redis-cli LRANGE externalmaxdownloadbatchsize 0 -1
@@ -71,8 +76,12 @@ done
 ####### RPC Stats - End #######
 
 ####### Storage Folders #######
-# take Storage Folders info into an array
-# STORAGE_FOLDERS=$( cat $MEM/SIAC_HOST_V | grep -A 3 "Storage Folders:" | tail -n 1 )
-# 
-# printf "%s " ${ARRAY[*]}
+printf "Storage:"
+lines 1
+array=( capacity capacityremaining index path failedreads failedwrites successfulreads successfulwrites ProgressNumerator ProgressDenominator )
+for i in "${array[@]}"
+do
+   : 
+   printf "\nCaching $i... Total: " && redis-cli -n 0 LPUSH $i $( cat $MEM/SIA_HOST_STORAGE_INFO | jq .folders | jq -r .$i ) && redis-cli LRANGE $i 0 -1
+done
 ####### Storage Folders - End #######
