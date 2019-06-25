@@ -82,6 +82,6 @@ array=( capacity capacityremaining index path failedreads failedwrites successfu
 for i in "${array[@]}"
 do
    : 
-   printf "\nCaching $i... Total: " && redis-cli -n 0 LPUSH $i $( cat $MEM/SIA_HOST_STORAGE_INFO | jq .folders | jq -r .$i ) && redis-cli LRANGE $i 0 -1
+   printf "\nCaching $i... Total: " && redis-cli -n 0 LPUSH $i $( cat $MEM/SIA_HOST_STORAGE_INFO | jq .folders[-1] | jq -r .$i ) && redis-cli LRANGE $i 0 -1
 done
 ####### Storage Folders - End #######
