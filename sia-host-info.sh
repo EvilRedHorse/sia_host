@@ -2,6 +2,13 @@
 # Author: Stefan Crawford
 # Description: Take in host information eg. "siac host -v" and create report
 
+# Requires: jq
+### To Install ###
+# sudo dnf -y install jq
+
+### function to print multiple blank lines
+function lines { yes '' | sed ${1}q ; }
+
 # define RAM
 readonly MEM=/dev/shm
 readonly HOST=localhost:9980
@@ -15,7 +22,10 @@ printf "\nCaching date... " && redis-cli -n 0 LPUSH SIA_HOST_DATE "$SIA_HOST_DAT
 $CURL -i -A "Sia-Agent" -u "":foobar $HOST/host | grep { > $MEM/SIA_HOST_INFO
 
 ####### External Settings - Start #######
-array=( maxdownloadbatchsize maxduration maxrevisebatchsize remainingstorage sectorsize totalstorage unlockhash )
+printf "\nCaching external maxdownloadbatchsize... " && redis-cli -n 0 LPUSH externalmaxdownloadbatchsize $( cat $MEM/SIA_HOST_INFO | jq .externalsettings | jq -r .maxdownloadbatchsize ) && redis-cli LRANGE externalmaxdownloadbatchsize 0 -1
+printf "\nCaching external maxduration... " && redis-cli -n 0 LPUSH externalmaxduration $( cat $MEM/SIA_HOST_INFO | jq .externalsettings | jq -r .maxduration ) && redis-cli LRANGE externalmaxduration 0 -1
+printf "\nCaching external maxrevisebatchsize... " && redis-cli -n 0 LPUSH externalmaxrevisebatchsize $( cat $MEM/SIA_HOST_INFO | jq .externalsettings | jq -r .maxrevisebatchsize ) && redis-cli LRANGE externalmaxrevisebatchsize 0 -1
+array=( remainingstorage sectorsize totalstorage unlockhash )
 for i in "${array[@]}"
 do
    : 
@@ -35,6 +45,8 @@ done
 ####### Financial Metrics - End #######
 
 ####### Internal Settings - Start #######
+printf "Internal Settings:"
+lines 1
 array=( acceptingcontracts maxdownloadbatchsize maxduration maxrevisebatchsize netaddress windowsize collateral collateralbudget maxcollateral minbaserpcprice mincontractprice mindownloadbandwidthprice minsectoraccessprice minstorageprice minuploadbandwidthprice )
 for i in "${array[@]}"
 do
