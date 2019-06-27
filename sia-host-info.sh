@@ -19,7 +19,7 @@ readonly HOST=localhost:4280
 # burst/rate-limit
 readonly CURL="curl -s --compressed --limit-rate 1M --connect-timeout 5"
 # current epoch
-readonly SIA_HOST_DATE=( date +"%s" )
+readonly SIA_HOST_DATE=( date +%s )
 # current rfc-3339 date
 # readonly SIA_HOST_DATE=$( date --rfc-3339=ns )
 
