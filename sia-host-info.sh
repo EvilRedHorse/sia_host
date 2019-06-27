@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Author: Stefan Crawford
-# Description: Take in host information eg. "siac host -v" and create report
+# Description: Take timestamped host information into redis
 
-# Requires: jq
-### To Install ###
-# sudo dnf -y install jq
+# Requires: jq redis 
+### To install on Fedora ###
+# sudo dnf -y install jq redis
+
+# set to exit on error 
+set -o errexit
 
 ### function to print multiple blank lines: instead of /n/n/n/n/n -> lines 5 
 function lines { yes '' | sed ${1}q ; }
@@ -12,7 +15,7 @@ function lines { yes '' | sed ${1}q ; }
 # define RAM
 readonly MEM=/dev/shm
 # HOST address
-readonly HOST=localhost:9980
+readonly HOST=localhost:4280
 # burst/rate-limit
 readonly CURL="curl -s --compressed --limit-rate 1M --connect-timeout 5"
 # current rfc-3339 date
@@ -22,9 +25,9 @@ readonly SIA_HOST_DATE=$( date --rfc-3339=ns )
 printf "\nCaching date... " && redis-cli -n 0 LPUSH SIA_HOST_DATE "$SIA_HOST_DATE" && redis-cli LRANGE SIA_HOST_DATE 0 -1
 
 # load initial host info into MEM
-$CURL -i -A "Sia-Agent" -u "":foobar $HOST/host | grep { > $MEM/SIA_HOST_INFO
+$CURL -i -A "SiaPrime-Agent" -u "":foobar $HOST/host | grep { > $MEM/SIA_HOST_INFO
 # load initial host storage info into MEM
-$CURL -i -A "Sia-Agent" -u "":foobar $HOST/host/storage | grep { > $MEM/SIA_HOST_STORAGE_INFO
+$CURL -i -A "SiaPrime-Agent" -u "":foobar $HOST/host/storage | grep { > $MEM/SIA_HOST_STORAGE_INFO
 
 ####### External Settings - Start #######
 printf "\nCaching external maxdownloadbatchsize... " && redis-cli -n 0 LPUSH externalmaxdownloadbatchsize $( cat $MEM/SIA_HOST_INFO | jq .externalsettings | jq -r .maxdownloadbatchsize ) && redis-cli LRANGE externalmaxdownloadbatchsize 0 -1
