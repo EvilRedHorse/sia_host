@@ -18,8 +18,10 @@ readonly MEM=/dev/shm
 readonly HOST=localhost:4280
 # burst/rate-limit
 readonly CURL="curl -s --compressed --limit-rate 1M --connect-timeout 5"
+# current epoch
+readonly SIA_HOST_DATE=( date +"%s" )
 # current rfc-3339 date
-readonly SIA_HOST_DATE=$( date --rfc-3339=ns )
+# readonly SIA_HOST_DATE=$( date --rfc-3339=ns )
 
 # cache date and atomic time in RFC-3339 format & print cached list
 printf "\nCaching date... " && redis-cli -n 0 LPUSH SIA_HOST_DATE "$SIA_HOST_DATE" && redis-cli LRANGE SIA_HOST_DATE 0 -1
